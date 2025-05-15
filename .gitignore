@@ -1,0 +1,21 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Visual Studio
+*.suo
+*.user
+*.userosscache
+.docstates
+.vs/
+.vscode/
+
+# Build artifacts
+x64/
+build/
+*.obj
+*.exe
+*.pdb

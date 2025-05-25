@@ -1,62 +1,96 @@
 // UIManager.cpp
 #include "UIManager.h"
+#include <iostream>
 #include <graphics.h>
 #include <string>
 #include <vector>
 #include <cmath>
+#include <assert.h>
 using namespace std;
 
 UIManager::UIManager() {
-    // å¯åŠ¨çª—å£
-    initgraph(BOARD_PIXEL, BOARD_PIXEL + 120); // é¡¶éƒ¨ç•™æ“ä½œåŒº
-    setbkcolor(RGB(242,242,242)); // æ¸©å’Œæµ…ç°
+    // Æô¶¯´°¿Ú
+    initgraph(BOARD_PIXEL, BOARD_PIXEL + 170);
+    setbkcolor(RGB(242,242,242));
     cleardevice();
 }
 
 void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected_y, std::vector<std::pair<int,int>> hints) {
     cleardevice();
-    // ç»˜æ£‹ç›˜èƒŒæ™¯
+    // »æÆåÅÌ±³¾°
     setfillcolor(WHITE); setlinecolor(RGB(180,180,180));
     fillroundrect(MARGIN-10, MARGIN-10, BOARD_PIXEL-MARGIN+10, BOARD_PIXEL-MARGIN+10, 30, 30);
 
-    // ç»˜æ£‹ç›˜æ ¼å’Œæ£‹å­
+    // »æÆåÅÌ¸ñºÍÆå×Ó
     for (int x = 0; x < PegBoard::BOARD_SIZE; ++x) {
         for (int y = 0; y < PegBoard::BOARD_SIZE; ++y) {
             int val = pegBoard.board[x][y];
             int px = MARGIN + y * CELL_SIZE;
             int py = MARGIN + x * CELL_SIZE;
 
-            if (val == -1) continue; // æ— æ•ˆåŒºä¸ç”»
+            if (val == -1) continue; // not a placeable position
 
-            // ç»˜åˆ¶åº•åº§
+            // base
             setfillcolor(RGB(224, 224, 224));
             fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-2);
 
-            // å¯é€‰ä¸­é«˜äº®
+            // select or hint highlights
             bool isSelect = (selected_x==x && selected_y==y);
             bool isHint = false;
             for (auto& pr : hints)
                 if (pr.first==x && pr.second==y) isHint = true;
             if (isSelect) {
-                setfillcolor(RGB(255, 224, 0)); // é»„è‰²é«˜äº®
+                setfillcolor(RGB(255, 224, 0));
                 fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-8);
             } else if (isHint) {
-                setfillcolor(RGB(140, 255, 140)); // ç»¿è‰²æç¤º
+                setfillcolor(RGB(140, 255, 140));
                 fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-12);
             }
 
-            // æ£‹å­ç»˜åˆ¶
+            assert(val == 1 || val == 0);
+            
             if (val == 1) {
-                // æ¸å˜è“è‰²çƒä½“
-                for (int r= CELL_SIZE/2-12; r > 0; r--) {
-                    int blue = 120 + 135 * r/(CELL_SIZE/2-12);
-                    setfillcolor(RGB(30, 144, blue));
-                    fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, r);
+                const int RMAX = CELL_SIZE / 2 - 12;
+                int cx = px + CELL_SIZE / 2;
+                int cy = py + CELL_SIZE / 2;
+                int R2 = RMAX * RMAX;
+                COLORREF clrInner = RGB(42, 113, 181);
+                COLORREF clrOuter = RGB(24, 48, 98);
+
+                // ¾¶Ïò½¥±ä
+                for (int dy = -RMAX; dy <= RMAX; ++dy) {
+                    for (int dx = -RMAX; dx <= RMAX; ++dx) {
+                        int dist2 = dx * dx + dy * dy;
+                        if (dist2 > R2) continue;
+                        double t = sqrt((double)dist2) / RMAX;
+                        // ·ÇÏßĞÔ£ºÈÃÖĞ¼äÉÔÎ¢Í»³ö¡¢±ßÔµ¹ı¶ÉÈáºÍ
+                        double fade = pow(t, 1.1);
+
+                        // ÈıÍ¨µÀ²åÖµ
+                        int r = GetRValue(clrInner) + (GetRValue(clrOuter) - GetRValue(clrInner)) * fade;
+                        int g = GetGValue(clrInner) + (GetGValue(clrOuter) - GetGValue(clrInner)) * fade;
+                        int b = GetBValue(clrInner) + (GetBValue(clrOuter) - GetBValue(clrInner)) * fade;
+
+                        putpixel(cx + dx, cy + dy, RGB(r, g, b));
+                    }
                 }
-                setlinecolor(RGB(24,48,98));
-                circle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-12);
+
+                // ¾µÃæ¸ß¹â
+                int HR = RMAX / 3;
+                int hx = cx - HR / 2, hy = cy - HR / 2;
+                int HR2 = HR * HR;
+                for (int dy = -HR; dy <= HR; ++dy) {
+                    for (int dx = -HR; dx <= HR; ++dx) {
+                        if (dx * dx + dy * dy > HR2) continue;
+                        int x2 = hx + dx, y2 = hy + dy;
+                        COLORREF base = getpixel(x2, y2);
+                        int lr = min(255, GetRValue(base) + (255 - GetRValue(base)) * 0.3);
+                        int lg = min(255, GetGValue(base) + (255 - GetGValue(base)) * 0.3);
+                        int lb = min(255, GetBValue(base) + (255 - GetBValue(base)) * 0.3);
+                        putpixel(x2, y2, RGB(lr, lg, lb));
+                    }
+                }
             }
-            // ç©ºå­”ç”¨æ·¡ç°æè¾¹åœˆ
             if (val == 0) {
                 setlinecolor(RGB(180, 180, 180));
                 setfillcolor(RGB(250, 250, 250));
@@ -65,11 +99,11 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
             }
         }
     }
-    // ç»˜åˆ¶æ ‡é¢˜
-    settextstyle(34, 0, _T("å¾®è½¯é›…é»‘"));
+    // »æÖÆ±êÌâ
+    settextstyle(34, 0, _T("Î¢ÈíÑÅºÚ"));
     setbkmode(TRANSPARENT);
-    settextcolor(RGB(24,48,98));
-    outtextxy(MARGIN, BOARD_PIXEL + 10, _T("Peg Solitaire å­”æ˜æ£‹"));
+    settextcolor(RGB(255,255,255));
+    outtextxy(MARGIN - 5, BOARD_PIXEL - 8 , _T("Peg Solitaire ¿×Ã÷Æå"));
 }
 
 void UIManager::DrawButton(int x, int y, int w, int h, const wchar_t* text, bool highlight) {
@@ -77,7 +111,7 @@ void UIManager::DrawButton(int x, int y, int w, int h, const wchar_t* text, bool
     solidroundrect(x, y, x+w, y+h, 16, 16);
     settextcolor(RGB(24,48,98));
     setbkmode(TRANSPARENT);
-    settextstyle(24, 0, _T("å¾®è½¯é›…é»‘"));
+    settextstyle(24, 0, _T("Î¢ÈíÑÅºÚ"));
     int tw = textwidth(text);
     int th = textheight(text);
     outtextxy(x+(w-tw)/2, y+(h-th)/2, text);
@@ -86,66 +120,88 @@ bool UIManager::IsInButton(int mx, int my, int x, int y, int w, int h) {
     return mx>=x && mx<=x+w && my>=y && my<=y+h;
 }
 
-void UIManager::DrawTips(const std::string& msg, int remain_pegs, bool showWin, bool win) {
-    // æ“ä½œåŒºï¼šæ¸…é™¤æ—§æç¤º
-    setfillcolor(RGB(242,242,242));
-    solidrectangle(0, BOARD_PIXEL, BOARD_PIXEL, BOARD_PIXEL+100);
+void DrawMultilineText(int x, int y, const std::wstring& text, int maxWidth, int lineHeight) {
+    std::wstring line;
+    std::vector<std::wstring> lines;
+    for (size_t i = 0; i < text.length(); ++i) {
+        line += text[i];
+        if (textwidth(line.c_str()) > maxWidth) {
+            line.pop_back();
+            lines.push_back(line);
+            line = text[i];
+        }
+    }
+    if (!line.empty()) lines.push_back(line);
 
-    settextstyle(24, 0, _T("å¾®è½¯é›…é»‘"));
-    setbkmode(TRANSPARENT);
-
-    // ä¸»æç¤º
-    settextcolor(RGB(0,120,224));
-    outtextxy(MARGIN, BOARD_PIXEL + 50, msg.c_str());
-
-    // æ£‹å­è®¡æ•°
-    wchar_t buf[32];
-    swprintf(buf, 32, L"å‰©ä½™æ£‹å­: %d", remain_pegs);
-    settextcolor(RGB(20,20,20));
-    outtextxy(MARGIN + 260, BOARD_PIXEL + 50, buf);
-
-    // èƒœè´Ÿå¼¹çª—
-    if (showWin) {
-        setfillcolor(win ? RGB(50,240,180) : RGB(255,180,0));
-        solidroundrect(MARGIN+60, BOARD_PIXEL+20, BOARD_PIXEL-MARGIN-60, BOARD_PIXEL+90, 20, 20);
-        settextstyle(36,0,_T("å¾®è½¯é›…é»‘"));
-        settextcolor(win?RGB(0,64,128):RGB(220,60,10));
-        outtextxy(MARGIN+120, BOARD_PIXEL+36, win? L"æ­å–œï¼Œèƒœåˆ©ï¼" : L"æ— è·¯å¯èµ°ï¼Œå¤±è´¥");
+    for (size_t i = 0; i < lines.size(); ++i) {
+        outtextxy(x, y + i * lineHeight, lines[i].c_str());
     }
 }
+
+void UIManager::DrawTips(const std::wstring& msg, int remain_pegs, bool showPegs, bool showWin, bool win) {
+    // Display Tips Background
+    setfillcolor(RGB(242, 242, 242));
+    solidrectangle(0, BOARD_PIXEL + 50, BOARD_PIXEL, BOARD_PIXEL + 150);
+
+    settextstyle(24, 0, _T("Î¢ÈíÑÅºÚ"));
+    setbkmode(TRANSPARENT);
+
+    // Main Tips 
+    settextcolor(RGB(0, 120, 224));
+    DrawMultilineText(MARGIN, BOARD_PIXEL + 70, msg, BOARD_PIXEL - MARGIN * 2, 30);  // ÊÖ¶¯»»ĞĞº¯Êı
+
+    // Æå×Ó¼ÆÊı
+    if (showPegs) {
+        wchar_t buf[32];
+        swprintf(buf, 32, L"Ê£ÓàÆå×Ó: %d", remain_pegs);
+        settextcolor(RGB(20, 20, 20));
+        outtextxy(MARGIN + 320, BOARD_PIXEL + 120, buf);
+    }
+
+    // Ê¤¸ºµ¯´°
+    if (showWin) {
+        settextstyle(36, 0, _T("Î¢ÈíÑÅºÚ"));
+        settextcolor(win ? RGB(0, 64, 128) : RGB(220, 60, 10));
+        outtextxy(MARGIN + 120, BOARD_PIXEL + 76, win ? L"¹§Ï²Äã»÷°ÜÈ«¹ú99%µÄÈË£¡" : L"ÄãÎŞÂ·¿ÉÌÓ£¡");
+    }
+}
+
 PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& select_y) {
-    // 1. å…ˆç‚¹é€‰æ£‹å­ï¼Œ2. å†ç‚¹ç›®æ ‡æ ¼
+    // 1. ÏÈµãÑ¡Æå×Ó£¬2. ÔÙµãÄ¿±ê¸ñ
     int stage = 0;
     int from_x = -1, from_y = -1;
     std::vector<std::pair<int,int>> hints;
+
+    int btn_w = 100, btn_h = 40;
+    int btn_undo_x = BOARD_PIXEL - 240, btn_undo_y = BOARD_PIXEL - 10;
+    int btn_restart_x = BOARD_PIXEL - 120, btn_restart_y = BOARD_PIXEL - 10;
+
+    int mx = -1, my = -1;
     ExMessage m;
+    BeginBatchDraw();
+    #define in_undo_btn IsInButton(mx, my, btn_undo_x, btn_undo_y, btn_w, btn_h)
+    #define in_restart_btn IsInButton(mx, my, btn_restart_x, btn_restart_y, btn_w, btn_h)
     while (true) {
-        // ç”»æŒ‰é’®ï¼ˆæ’¤é”€/é‡ç½®/é€€å‡ºç­‰ï¼‰
-        DrawButton(BOARD_PIXEL-240, BOARD_PIXEL+28, 100, 40, L"æ’¤é”€");
-        DrawButton(BOARD_PIXEL-120, BOARD_PIXEL+28, 100, 40, L"é‡å¼€");
+        // »­°´Å¥£¨³·Ïú/ÖØÖÃ/ÍË³öµÈ£©
+        DrawButton(btn_undo_x, btn_undo_y, 100, 40, L"³·Ïú", in_undo_btn);
+        DrawButton(btn_restart_x, btn_restart_y, 100, 40, L"ÖØ¿ª", in_restart_btn);
 
         if (peekmessage(&m, EX_MOUSE)) {
+            mx = m.x;
+            my = m.y;
             if (m.message == WM_LBUTTONDOWN) {
-                int mx = m.x, my = m.y;
-                // æŒ‰é’®
-                if (IsInButton(mx, my, BOARD_PIXEL-240, BOARD_PIXEL+28, 100, 40)) {
-                    // è¿”å›æ’¤é”€æ“ä½œ
-                    return PegMove(-1, -1, -1, -1, -1, -1, true);
-                }
-                if (IsInButton(mx, my, BOARD_PIXEL-120, BOARD_PIXEL+28, 100, 40)) {
-                    // å¤åŸå…¨ç›˜
-                    return PegMove(-2, -2, -2, -2, -2, -2, true);
-                }
-                // æ£‹ç›˜å†…ç‚¹å‡»
+                EndBatchDraw();
+                
+                if (in_undo_btn) return PegMove(-1, -1, -1, -1, -1, -1, true);
+                if (in_restart_btn) return PegMove(-2, -2, -2, -2, -2, -2, true);
+
                 int gx = (my-MARGIN)/CELL_SIZE, gy = (mx-MARGIN)/CELL_SIZE;
                 if (gx<0||gy<0||gx>=PegBoard::BOARD_SIZE||gy>=PegBoard::BOARD_SIZE) continue;
                 if (pegBoard.board[gx][gy]==-1) continue;
 
                 if (stage==0 && pegBoard.board[gx][gy]==1) {
-                    // é€‰æ£‹å­ï¼Œæ˜¾ç¤ºå¯èµ°æ–¹å‘
                     from_x = gx; from_y = gy; stage=1;
                     hints.clear();
-                    // å¯èµ°æ–¹å‘æç¤º
                     int dirs[4][2] = {{-1,0},{1,0},{0,-1},{0,1}};
                     for (auto& d:dirs) {
                         int tx = gx+2*d[0], ty = gy+2*d[1];
@@ -154,18 +210,15 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                     }
                     DrawBoard(pegBoard, from_x, from_y, hints);
                 } else if (stage==1) {
-                    // ç‚¹ç›®æ ‡æ ¼
                     bool found = false;
                     for (auto& p:hints) {
                         if (p.first==gx && p.second==gy) found=true;
                     }
                     if (found) {
                         select_x = from_x; select_y = from_y;
-                        // ç¡®å®šæ–¹å‘
                         int dx = (gx - from_x)/2, dy = (gy - from_y)/2;
                         return PegMove(from_x, from_y, gx, gy, from_x+dx, from_y+dy, false);
                     }
-                    // å¦‚è¯¯ç‚¹å…¶å®ƒæ£‹å­ï¼Œé‡æ–°é€‰
                     if (pegBoard.board[gx][gy]==1) {
                         from_x = gx; from_y = gy;
                         hints.clear();
@@ -178,19 +231,72 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                 }
             }
         }
+        DrawTips(L"", pegBoard.CountPegs(), true);
+        FlushBatchDraw();
         Sleep(10);
     }
+    #undef in_undo_btn
+    #undef in_restart_btn
 }
 
-void UIManager::DrawMenu() {
+int UIManager::DrawMenu() {
     cleardevice();
     setbkcolor(RGB(42, 113, 181));
     cleardevice();
-    settextstyle(46, 0, _T("å¾®è½¯é›…é»‘"));
+    settextstyle(46, 0, _T("Î¢ÈíÑÅºÚ"));
     setbkmode(TRANSPARENT);
     settextcolor(WHITE);
-    outtextxy(BOARD_PIXEL/2-140, BOARD_PIXEL/2-80, _T("Peg Solitaire å­”æ˜æ£‹"));
-    DrawButton(BOARD_PIXEL/2-70, BOARD_PIXEL/2, 140, 50, L"å¼€å§‹æ¸¸æˆ", true);
-    DrawButton(BOARD_PIXEL/2-70, BOARD_PIXEL/2+70, 140, 50, L"æ¸¸æˆè¯´æ˜");
-    // å¤„ç†ç‚¹å‡»é€»è¾‘ç•¥
+    outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire ¿×Ã÷Æå"));
+
+    int btn_w = 140, btn_h = 50;
+    int btn_start_x = BOARD_PIXEL / 2 - 70, btn_start_y = BOARD_PIXEL / 2;
+    int btn_rule_x = btn_start_x, btn_rule_y = btn_start_y + 70;
+
+    int mx = -1, my = -1;
+    ExMessage m;
+    // ÆôÓÃË«»º³å https://docs.easyx.cn/zh-cn/beginbatchdraw
+    BeginBatchDraw();
+    #define in_start_btn IsInButton(mx, my, btn_start_x, btn_start_y, btn_w, btn_h)
+    #define in_rule_btn IsInButton(mx, my, btn_rule_x, btn_rule_y, btn_w, btn_h)
+    while (true) {
+        if (peekmessage(&m, EX_MOUSE)) {
+            mx = m.x;
+            my = m.y;
+            if (m.message == WM_LBUTTONDOWN) {
+                EndBatchDraw();
+                if (in_start_btn) return 1;
+                if (in_rule_btn)  return 2;
+            }
+        }
+        cleardevice();
+        settextstyle(46, 0, _T("Î¢ÈíÑÅºÚ"));
+        setbkmode(TRANSPARENT);
+        settextcolor(WHITE);
+        outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire ¿×Ã÷Æå"));
+
+        DrawButton(btn_start_x, btn_start_y, btn_w, btn_h, L"¿ªÊ¼ÓÎÏ·", in_start_btn);
+        DrawButton(btn_rule_x, btn_rule_y, btn_w, btn_h, L"ÓÎÏ·ËµÃ÷", in_rule_btn);
+
+        FlushBatchDraw();
+        Sleep(10);
+    }
+    #undef in_start_btn
+    #undef in_rule_btn
+}
+
+void UIManager::WaitForClick() {
+    settextstyle(20, 0, _T("Î¢ÈíÑÅºÚ"));
+    settextcolor(RGB(100, 100, 100));
+    setbkmode(TRANSPARENT);
+    outtextxy(MARGIN, BOARD_PIXEL + 130, _T("°´ÈÎÒâ¼ü»òµã»÷Êó±ê·µ»Ø²Ëµ¥..."));
+
+    ExMessage m;
+    while (true) {
+        if (peekmessage(&m)) {
+            if ((m.message == WM_KEYDOWN) || (m.message == WM_LBUTTONDOWN)) {
+                break;
+            }
+        }
+        Sleep(10);
+    }
 }

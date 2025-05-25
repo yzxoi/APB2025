@@ -4,8 +4,8 @@
 #include "PegBoard.h"
 #include "PegMove.h"
 #include <string>
-
-// #include <graphics.h>
+#include <vector>
+#include <graphics.h>
 
 class UIManager {
 public:
@@ -15,9 +15,9 @@ public:
 
     UIManager();
     void DrawBoard(const PegBoard& pegBoard, int selected_x = -1, int selected_y = -1, std::vector<std::pair<int,int>> hints = {});
-    void DrawTips(const std::string& msg, int remain_pegs, bool showWin = false, bool win = false);
+    void DrawTips(const std::wstring& msg, int remain_pegs, bool showPegs = true, bool showWin = false, bool win = false);
     PegMove GetUserMove(const PegBoard& pegBoard, int& select_x, int& select_y);
-    void DrawMenu();
+    int DrawMenu();
     void WaitForClick();
     void DrawButton(int x, int y, int w, int h, const wchar_t* text, bool highlight=false);
     bool IsInButton(int mx, int my, int x, int y, int w, int h);

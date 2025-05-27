@@ -2,6 +2,7 @@
 #define PEGBOARD_H
 
 #include "PegMove.h"
+#include <atomic>
 
 class PegBoard {
 public:
@@ -14,6 +15,7 @@ public:
     void Undo(const PegMove& move);
     bool HasValidMove() const;
     int CountPegs() const;
+    PegMove GetBestMove(std::atomic<bool>& cancel);
 };
 
 #endif // PEGBOARD_H

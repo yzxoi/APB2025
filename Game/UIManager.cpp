@@ -15,7 +15,7 @@ UIManager::UIManager() {
     cleardevice();
 }
 
-void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected_y, std::vector<std::pair<int,int>> hints) {
+void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected_y, std::vector<std::pair<int,int>> hints, bool useAIHint, PegMove AIHint) {
     cleardevice();
     // 绘棋盘背景
     setfillcolor(WHITE); setlinecolor(RGB(180,180,180));
@@ -31,21 +31,42 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
             if (val == -1) continue; // not a placeable position
 
             // base
+            setlinecolor(RGB(180, 180, 180));
             setfillcolor(RGB(224, 224, 224));
             fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-2);
 
             // select or hint highlights
             bool isSelect = (selected_x==x && selected_y==y);
             bool isHint = false;
+            bool isAIHint_from = (useAIHint && AIHint.from_x == x && AIHint.from_y == y);
+            bool isAIHint_jumped = (useAIHint && AIHint.jumped_x == x && AIHint.jumped_y == y);
+            bool isAIHint_to = (useAIHint && AIHint.to_x == x && AIHint.to_y == y);
+
             for (auto& pr : hints)
                 if (pr.first==x && pr.second==y) isHint = true;
             if (isSelect) {
                 setfillcolor(RGB(255, 224, 0));
-                fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-8);
+                fillcircle(px + CELL_SIZE / 2, py+CELL_SIZE/2, CELL_SIZE/2-8);
             } else if (isHint) {
                 setfillcolor(RGB(140, 255, 140));
-                fillcircle(px+CELL_SIZE/2, py+CELL_SIZE/2, CELL_SIZE/2-12);
+                fillcircle(px + CELL_SIZE / 2, py+CELL_SIZE/2, CELL_SIZE/2-12);
             }
+            else if (isAIHint_from) {
+                setlinecolor(RGB(255, 140, 0));
+                setlinestyle(PS_SOLID, 4);
+                circle(px + CELL_SIZE / 2, py + CELL_SIZE / 2, CELL_SIZE / 2 - 6);
+            }
+            else if (isAIHint_jumped) {
+                setlinecolor(RGB(255, 69, 0));
+                setlinestyle(PS_SOLID, 4);
+                circle(px + CELL_SIZE / 2, py + CELL_SIZE / 2, CELL_SIZE / 2 - 10);
+            }
+            else if (isAIHint_to) {
+                setlinecolor(RGB(50, 205, 50));
+                setlinestyle(PS_SOLID, 4);
+                circle(px + CELL_SIZE / 2, py + CELL_SIZE / 2, CELL_SIZE / 2 - 6);
+            }
+
 
             assert(val == 1 || val == 0);
             
@@ -99,11 +120,32 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
             }
         }
     }
+    if (useAIHint && AIHint.from_x != -1) {
+        int fx = MARGIN + AIHint.from_y * CELL_SIZE + CELL_SIZE / 2;
+        int fy = MARGIN + AIHint.from_x * CELL_SIZE + CELL_SIZE / 2;
+        int tx = MARGIN + AIHint.to_y * CELL_SIZE + CELL_SIZE / 2;
+        int ty = MARGIN + AIHint.to_x * CELL_SIZE + CELL_SIZE / 2;
+
+        setlinecolor(RGB(255, 140, 0));
+        setlinestyle(PS_SOLID, 3);
+        line(fx, fy, tx, ty);
+        double ang = atan2(ty - fy, tx - fx);
+        const double AH = 10.0; 
+        const double PI = acos(-1);
+        const double AW = PI / 6;
+        int ax1 = tx - AH * cos(ang - AW);
+        int ay1 = ty - AH * sin(ang - AW);
+        int ax2 = tx - AH * cos(ang + AW);
+        int ay2 = ty - AH * sin(ang + AW);
+        line(tx, ty, ax1, ay1);
+        line(tx, ty, ax2, ay2);
+    }
+
     // 绘制标题
     settextstyle(34, 0, _T("微软雅黑"));
     setbkmode(TRANSPARENT);
     settextcolor(RGB(255,255,255));
-    outtextxy(MARGIN - 5, BOARD_PIXEL - 8 , _T("Peg Solitaire 孔明棋"));
+    outtextxy(MARGIN - 5, BOARD_PIXEL - 8 , _T("孔明棋"));
 }
 
 void UIManager::DrawButton(int x, int y, int w, int h, const wchar_t* text, bool highlight) {
@@ -162,27 +204,30 @@ void UIManager::DrawTips(const std::wstring& msg, int remain_pegs, bool showPegs
     if (showWin) {
         settextstyle(36, 0, _T("微软雅黑"));
         settextcolor(win ? RGB(0, 64, 128) : RGB(220, 60, 10));
-        outtextxy(MARGIN + 120, BOARD_PIXEL + 76, win ? L"恭喜你击败全国99%的人！" : L"你无路可逃！");
+        outtextxy(MARGIN + 120, BOARD_PIXEL + 76, win ? L"恭喜你，你赢了！" : L"你无路可逃！");
     }
 }
 
-PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& select_y) {
+PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& select_y, bool useAIHint, PegMove AIHint) {
     // 1. 先点选棋子，2. 再点目标格
     int stage = 0;
     int from_x = -1, from_y = -1;
     std::vector<std::pair<int,int>> hints;
 
     int btn_w = 100, btn_h = 40;
+    int btn_ai_x = BOARD_PIXEL - 360, btn_ai_y = BOARD_PIXEL - 10;
     int btn_undo_x = BOARD_PIXEL - 240, btn_undo_y = BOARD_PIXEL - 10;
     int btn_restart_x = BOARD_PIXEL - 120, btn_restart_y = BOARD_PIXEL - 10;
 
     int mx = -1, my = -1;
     ExMessage m;
     BeginBatchDraw();
+    #define in_ai_btn IsInButton(mx, my, btn_ai_x, btn_ai_y, btn_w, btn_h)
     #define in_undo_btn IsInButton(mx, my, btn_undo_x, btn_undo_y, btn_w, btn_h)
     #define in_restart_btn IsInButton(mx, my, btn_restart_x, btn_restart_y, btn_w, btn_h)
+
     while (true) {
-        // 画按钮（撤销/重置/退出等）
+        DrawButton(btn_ai_x, btn_ai_y, 100, 40, L"提示", in_ai_btn);
         DrawButton(btn_undo_x, btn_undo_y, 100, 40, L"撤销", in_undo_btn);
         DrawButton(btn_restart_x, btn_restart_y, 100, 40, L"重开", in_restart_btn);
 
@@ -194,6 +239,7 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                 
                 if (in_undo_btn) return PegMove(-1, -1, -1, -1, -1, -1, true);
                 if (in_restart_btn) return PegMove(-2, -2, -2, -2, -2, -2, true);
+                if (in_ai_btn) return PegMove(-3, -3, -3, -3, -3, -3, true);
 
                 int gx = (my-MARGIN)/CELL_SIZE, gy = (mx-MARGIN)/CELL_SIZE;
                 if (gx<0||gy<0||gx>=PegBoard::BOARD_SIZE||gy>=PegBoard::BOARD_SIZE) continue;
@@ -208,7 +254,7 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                         if (pegBoard.CanMove(gx, gy, d[0], d[1]))
                             hints.push_back({tx, ty});
                     }
-                    DrawBoard(pegBoard, from_x, from_y, hints);
+                    DrawBoard(pegBoard, from_x, from_y, hints, useAIHint, AIHint);
                 } else if (stage==1) {
                     bool found = false;
                     for (auto& p:hints) {
@@ -226,12 +272,17 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                         for (auto& d:dirs)
                             if (pegBoard.CanMove(gx, gy, d[0], d[1]))
                                 hints.push_back({gx+2*d[0], gy+2*d[1]});
-                        DrawBoard(pegBoard, from_x, from_y, hints);
+                        DrawBoard(pegBoard, from_x, from_y, hints, useAIHint, AIHint);
                     }
                 }
             }
         }
-        DrawTips(L"", pegBoard.CountPegs(), true);
+        if (useAIHint && AIHint.from_x == -1) {
+            DrawTips(L"失败！当前状态无法到达有效解空间。", pegBoard.CountPegs(), true);
+        }
+        else {
+            DrawTips(L"", pegBoard.CountPegs(), true);
+        }
         FlushBatchDraw();
         Sleep(10);
     }

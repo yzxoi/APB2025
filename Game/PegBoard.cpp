@@ -1,6 +1,14 @@
 #include "PegBoard.h"
+#include "Solver.h"
+#include <iostream>
 #include <cstring>
 #include <cmath>
+#include <queue>
+#include <unordered_set>
+#include <unordered_map>
+#include <cstdint>
+#include <assert.h>
+#include <atomic>
 
 PegBoard::PegBoard() { Reset(); }
 
@@ -61,4 +69,28 @@ int PegBoard::CountPegs() const {
         for (int y = 0; y < BOARD_SIZE; y++)
             if (board[x][y] == 1) cnt++;
     return cnt;
+}
+
+PegMove PegBoard::GetBestMove(std::atomic<bool>& cancel) {
+    uint64_t s = 0;
+    for (int x = 0; x < BOARD_SIZE; ++x) {
+        for (int y = 0; y < BOARD_SIZE; ++y) {
+            if (board[x][y] == 1) {
+                int idx = xy2idx[x][y];
+                s |= (1ULL << idx);
+            }
+        }
+    }
+
+    bool ok = solve(s, cancel);
+    if (!ok || bestPath.empty()) {
+        return PegMove(-1, -1, -1, -1, -1, -1);
+    }
+
+    Jump jp = bestPath[0];
+    int fx = idx2x[jp.from], fy = idx2y[jp.from];
+    int jx = idx2x[jp.over], jy = idx2y[jp.over];
+    int tx = idx2x[jp.to], ty = idx2y[jp.to];
+
+    return PegMove(fx, fy, tx, ty, jx, jy);
 }

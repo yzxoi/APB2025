@@ -2,7 +2,10 @@
 //
 
 #include "GameController.h"
+#include "Solver.h"
+
 int main() {
+    Solver_Init();
     GameController game;
     game.Run();
     return 0;

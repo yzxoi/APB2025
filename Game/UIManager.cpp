@@ -237,9 +237,9 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
             if (m.message == WM_LBUTTONDOWN) {
                 EndBatchDraw();
                 
-                if (in_undo_btn) return PegMove(-1, -1, -1, -1, -1, -1, true);
-                if (in_restart_btn) return PegMove(-2, -2, -2, -2, -2, -2, true);
-                if (in_ai_btn) return PegMove(-3, -3, -3, -3, -3, -3, true);
+                if (in_undo_btn) return PegMove(-1, -1, -1, -1, -1, -1);
+                if (in_restart_btn) return PegMove(-2, -2, -2, -2, -2, -2);
+                if (in_ai_btn) return PegMove(-3, -3, -3, -3, -3, -3);
 
                 int gx = (my-MARGIN)/CELL_SIZE, gy = (mx-MARGIN)/CELL_SIZE;
                 if (gx<0||gy<0||gx>=PegBoard::BOARD_SIZE||gy>=PegBoard::BOARD_SIZE) continue;
@@ -263,7 +263,7 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
                     if (found) {
                         select_x = from_x; select_y = from_y;
                         int dx = (gx - from_x)/2, dy = (gy - from_y)/2;
-                        return PegMove(from_x, from_y, gx, gy, from_x+dx, from_y+dy, false);
+                        return PegMove(from_x, from_y, gx, gy, from_x+dx, from_y+dy);
                     }
                     if (pegBoard.board[gx][gy]==1) {
                         from_x = gx; from_y = gy;

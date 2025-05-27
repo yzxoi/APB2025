@@ -28,6 +28,7 @@ A modern and interactive **English Peg Solitaire** game with a C++-based graphic
 ## ⚙️ 编译与运行
 
 项目使用 Visual Studio + EasyX 图形库，仅支持 Windows 平台。
+请注意，O2 指令并不能与 Debug 下使用，请采用 Release 选项进行编译。
 1.	安装 EasyX：从 官网 下载并配置。
 2.	使用 Visual Studio 打开 project.sln。
 3.	构建并运行即可。

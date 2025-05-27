@@ -53,12 +53,6 @@ void GameController::Run() {
                 useAIHint = true;
                 AIHint = PegMove();
 
-                auto formatTip = [&](double sec) {
-                    wchar_t buf[128];
-                    swprintf(buf, 128, L"计算中…已耗时 %.1f 秒，按 ESC 取消", sec);
-                    return std::wstring(buf);
-                    };
-
                 std::atomic<bool> done(false), cancel(false);
                 PegMove result;
                 auto t0 = std::chrono::steady_clock::now();

@@ -9,7 +9,7 @@
 using namespace std;
 
 UIManager::UIManager() {
-    // Æô¶¯´°¿Ú
+    // å¯åŠ¨çª—å£
     initgraph(BOARD_PIXEL, BOARD_PIXEL + 170);
     setbkcolor(RGB(242,242,242));
     cleardevice();
@@ -17,11 +17,11 @@ UIManager::UIManager() {
 
 void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected_y, std::vector<std::pair<int,int>> hints, bool useAIHint, PegMove AIHint) {
     cleardevice();
-    // »æÆåÅÌ±³¾°
+    // ç»˜æ£‹ç›˜èƒŒæ™¯
     setfillcolor(WHITE); setlinecolor(RGB(180,180,180));
     fillroundrect(MARGIN-10, MARGIN-10, BOARD_PIXEL-MARGIN+10, BOARD_PIXEL-MARGIN+10, 30, 30);
 
-    // »æÆåÅÌ¸ñºÍÆå×Ó
+    // ç»˜æ£‹ç›˜æ ¼å’Œæ£‹å­
     for (int x = 0; x < PegBoard::BOARD_SIZE; ++x) {
         for (int y = 0; y < PegBoard::BOARD_SIZE; ++y) {
             int val = pegBoard.board[x][y];
@@ -78,16 +78,16 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
                 COLORREF clrInner = RGB(42, 113, 181);
                 COLORREF clrOuter = RGB(24, 48, 98);
 
-                // ¾¶Ïò½¥±ä
+                // å¾„å‘æ¸å˜
                 for (int dy = -RMAX; dy <= RMAX; ++dy) {
                     for (int dx = -RMAX; dx <= RMAX; ++dx) {
                         int dist2 = dx * dx + dy * dy;
                         if (dist2 > R2) continue;
                         double t = sqrt((double)dist2) / RMAX;
-                        // ·ÇÏßĞÔ£ºÈÃÖĞ¼äÉÔÎ¢Í»³ö¡¢±ßÔµ¹ı¶ÉÈáºÍ
+                        // éçº¿æ€§ï¼šè®©ä¸­é—´ç¨å¾®çªå‡ºã€è¾¹ç¼˜è¿‡æ¸¡æŸ”å’Œ
                         double fade = pow(t, 1.1);
 
-                        // ÈıÍ¨µÀ²åÖµ
+                        // ä¸‰é€šé“æ’å€¼
                         int r = GetRValue(clrInner) + (GetRValue(clrOuter) - GetRValue(clrInner)) * fade;
                         int g = GetGValue(clrInner) + (GetGValue(clrOuter) - GetGValue(clrInner)) * fade;
                         int b = GetBValue(clrInner) + (GetBValue(clrOuter) - GetBValue(clrInner)) * fade;
@@ -96,7 +96,7 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
                     }
                 }
 
-                // ¾µÃæ¸ß¹â
+                // é•œé¢é«˜å…‰
                 int HR = RMAX / 3;
                 int hx = cx - HR / 2, hy = cy - HR / 2;
                 int HR2 = HR * HR;
@@ -141,11 +141,11 @@ void UIManager::DrawBoard(const PegBoard& pegBoard, int selected_x, int selected
         line(tx, ty, ax2, ay2);
     }
 
-    // »æÖÆ±êÌâ
-    settextstyle(34, 0, _T("Î¢ÈíÑÅºÚ"));
+    // ç»˜åˆ¶æ ‡é¢˜
+    settextstyle(34, 0, _T("å¾®è½¯é›…é»‘"));
     setbkmode(TRANSPARENT);
     settextcolor(RGB(255,255,255));
-    outtextxy(MARGIN - 5, BOARD_PIXEL - 8 , _T("¿×Ã÷Æå"));
+    outtextxy(MARGIN - 5, BOARD_PIXEL - 8 , _T("å­”æ˜æ£‹"));
 }
 
 void UIManager::DrawButton(int x, int y, int w, int h, const wchar_t* text, bool highlight) {
@@ -153,7 +153,7 @@ void UIManager::DrawButton(int x, int y, int w, int h, const wchar_t* text, bool
     solidroundrect(x, y, x+w, y+h, 16, 16);
     settextcolor(RGB(24,48,98));
     setbkmode(TRANSPARENT);
-    settextstyle(24, 0, _T("Î¢ÈíÑÅºÚ"));
+    settextstyle(24, 0, _T("å¾®è½¯é›…é»‘"));
     int tw = textwidth(text);
     int th = textheight(text);
     outtextxy(x+(w-tw)/2, y+(h-th)/2, text);
@@ -185,31 +185,31 @@ void UIManager::DrawTips(const std::wstring& msg, int remain_pegs, bool showPegs
     setfillcolor(RGB(242, 242, 242));
     solidrectangle(0, BOARD_PIXEL + 50, BOARD_PIXEL, BOARD_PIXEL + 150);
 
-    settextstyle(24, 0, _T("Î¢ÈíÑÅºÚ"));
+    settextstyle(24, 0, _T("å¾®è½¯é›…é»‘"));
     setbkmode(TRANSPARENT);
 
     // Main Tips 
     settextcolor(RGB(0, 120, 224));
-    DrawMultilineText(MARGIN, BOARD_PIXEL + 70, msg, BOARD_PIXEL - MARGIN * 2, 30);  // ÊÖ¶¯»»ĞĞº¯Êı
+    DrawMultilineText(MARGIN, BOARD_PIXEL + 70, msg, BOARD_PIXEL - MARGIN * 2, 30);  // æ‰‹åŠ¨æ¢è¡Œå‡½æ•°
 
-    // Æå×Ó¼ÆÊı
+    // æ£‹å­è®¡æ•°
     if (showPegs) {
         wchar_t buf[32];
-        swprintf(buf, 32, L"Ê£ÓàÆå×Ó: %d", remain_pegs);
+        swprintf(buf, 32, L"å‰©ä½™æ£‹å­: %d", remain_pegs);
         settextcolor(RGB(20, 20, 20));
         outtextxy(MARGIN + 320, BOARD_PIXEL + 120, buf);
     }
 
-    // Ê¤¸ºµ¯´°
+    // èƒœè´Ÿå¼¹çª—
     if (showWin) {
-        settextstyle(36, 0, _T("Î¢ÈíÑÅºÚ"));
+        settextstyle(36, 0, _T("å¾®è½¯é›…é»‘"));
         settextcolor(win ? RGB(0, 64, 128) : RGB(220, 60, 10));
-        outtextxy(MARGIN + 120, BOARD_PIXEL + 76, win ? L"¹§Ï²Äã£¬ÄãÓ®ÁË£¡" : L"ÄãÎŞÂ·¿ÉÌÓ£¡");
+        outtextxy(MARGIN + 120, BOARD_PIXEL + 76, win ? L"æ­å–œä½ ï¼Œä½ èµ¢äº†ï¼" : L"ä½ æ— è·¯å¯é€ƒï¼");
     }
 }
 
 PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& select_y, bool useAIHint, PegMove AIHint) {
-    // 1. ÏÈµãÑ¡Æå×Ó£¬2. ÔÙµãÄ¿±ê¸ñ
+    // 1. å…ˆç‚¹é€‰æ£‹å­ï¼Œ2. å†ç‚¹ç›®æ ‡æ ¼
     int stage = 0;
     int from_x = -1, from_y = -1;
     std::vector<std::pair<int,int>> hints;
@@ -227,9 +227,9 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
     #define in_restart_btn IsInButton(mx, my, btn_restart_x, btn_restart_y, btn_w, btn_h)
 
     while (true) {
-        DrawButton(btn_ai_x, btn_ai_y, 100, 40, L"ÌáÊ¾", in_ai_btn);
-        DrawButton(btn_undo_x, btn_undo_y, 100, 40, L"³·Ïú", in_undo_btn);
-        DrawButton(btn_restart_x, btn_restart_y, 100, 40, L"ÖØ¿ª", in_restart_btn);
+        DrawButton(btn_ai_x, btn_ai_y, 100, 40, L"æç¤º", in_ai_btn);
+        DrawButton(btn_undo_x, btn_undo_y, 100, 40, L"æ’¤é”€", in_undo_btn);
+        DrawButton(btn_restart_x, btn_restart_y, 100, 40, L"é‡å¼€", in_restart_btn);
 
         if (peekmessage(&m, EX_MOUSE)) {
             mx = m.x;
@@ -278,7 +278,8 @@ PegMove UIManager::GetUserMove(const PegBoard& pegBoard, int& select_x, int& sel
             }
         }
         if (useAIHint && AIHint.from_x == -1) {
-            DrawTips(L"Ê§°Ü£¡µ±Ç°×´Ì¬ÎŞ·¨µ½´ïÓĞĞ§½â¿Õ¼ä¡£", pegBoard.CountPegs(), true);
+    #undef in_ai_btn
+#undef in_undo_btn
         }
         else {
             DrawTips(L"", pegBoard.CountPegs(), true);
@@ -294,10 +295,10 @@ int UIManager::DrawMenu() {
     cleardevice();
     setbkcolor(RGB(42, 113, 181));
     cleardevice();
-    settextstyle(46, 0, _T("Î¢ÈíÑÅºÚ"));
+    settextstyle(46, 0, _T("å¾®è½¯é›…é»‘"));
     setbkmode(TRANSPARENT);
     settextcolor(WHITE);
-    outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire ¿×Ã÷Æå"));
+    outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire å­”æ˜æ£‹"));
 
     int btn_w = 140, btn_h = 50;
     int btn_start_x = BOARD_PIXEL / 2 - 70, btn_start_y = BOARD_PIXEL / 2;
@@ -305,7 +306,7 @@ int UIManager::DrawMenu() {
 
     int mx = -1, my = -1;
     ExMessage m;
-    // ÆôÓÃË«»º³å https://docs.easyx.cn/zh-cn/beginbatchdraw
+    // å¯ç”¨åŒç¼“å†² https://docs.easyx.cn/zh-cn/beginbatchdraw
     BeginBatchDraw();
     #define in_start_btn IsInButton(mx, my, btn_start_x, btn_start_y, btn_w, btn_h)
     #define in_rule_btn IsInButton(mx, my, btn_rule_x, btn_rule_y, btn_w, btn_h)
@@ -320,13 +321,13 @@ int UIManager::DrawMenu() {
             }
         }
         cleardevice();
-        settextstyle(46, 0, _T("Î¢ÈíÑÅºÚ"));
+        settextstyle(46, 0, _T("å¾®è½¯é›…é»‘"));
         setbkmode(TRANSPARENT);
         settextcolor(WHITE);
-        outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire ¿×Ã÷Æå"));
+        outtextxy(BOARD_PIXEL / 2 - 140, BOARD_PIXEL / 2 - 80, _T("Peg Solitaire å­”æ˜æ£‹"));
 
-        DrawButton(btn_start_x, btn_start_y, btn_w, btn_h, L"¿ªÊ¼ÓÎÏ·", in_start_btn);
-        DrawButton(btn_rule_x, btn_rule_y, btn_w, btn_h, L"ÓÎÏ·ËµÃ÷", in_rule_btn);
+        DrawButton(btn_start_x, btn_start_y, btn_w, btn_h, L"å¼€å§‹æ¸¸æˆ", in_start_btn);
+        DrawButton(btn_rule_x, btn_rule_y, btn_w, btn_h, L"æ¸¸æˆè¯´æ˜", in_rule_btn);
 
         FlushBatchDraw();
         Sleep(10);
@@ -336,10 +337,10 @@ int UIManager::DrawMenu() {
 }
 
 void UIManager::WaitForClick() {
-    settextstyle(20, 0, _T("Î¢ÈíÑÅºÚ"));
+    settextstyle(20, 0, _T("å¾®è½¯é›…é»‘"));
     settextcolor(RGB(100, 100, 100));
     setbkmode(TRANSPARENT);
-    outtextxy(MARGIN, BOARD_PIXEL + 130, _T("°´ÈÎÒâ¼ü»òµã»÷Êó±ê·µ»Ø²Ëµ¥..."));
+    outtextxy(MARGIN, BOARD_PIXEL + 130, _T("æŒ‰ä»»æ„é”®æˆ–ç‚¹å‡»é¼ æ ‡è¿”å›èœå•..."));
 
     ExMessage m;
     while (true) {
